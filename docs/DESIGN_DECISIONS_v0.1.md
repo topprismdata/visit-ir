@@ -51,3 +51,20 @@ VisitIR Module
 2. 按 v0.1 模块树重构：ObligationSet 与 Command/Event 为新增件；
 3. 主线 `core/contract.py` 改为薄 shim → `visit_ir` 依赖；
 4. JSON Schema（plan_ir/v0.1）随首版发布，供 LLM 适配层做约束生成（OQ-5 裁定：schema-constrained 优先）。
+
+## 六、共研批判清单（ChatGPT P0/P1 逐条裁决）
+
+| # | 批判 | 裁决 | 落点 |
+|---|---|---|---|
+| P0-1 | 缺 ObligationIR，Contract 直接跳 Plan 太远；否则合同解释器/SP/Gate 三处重复实现日历语义 | 采纳（即 D1） | ObligationSet；grounding 函数唯一实现处 |
+| P0-2 | 反对 PlanEvent[] 作唯一真相源（replay 成本、事件语义自身演化、历史缺失即 artifact 不可解释）| **采纳，修正 v0 草案**：PlanState=authoritative current；PlanHistory=authoritative provenance；不变量 `fold(base_snapshot, events) == head_snapshot`，二者不许漂移 | §二 History 结构 |
+| P0-3 | LLM 不该制造事实：Event=已接受事实；应为 Command(意图)→Decision(IR裁决)→Accept?Event:Reject(reason) 三型 | 采纳（即 D4 的严格化） | History 三桶；LLM 适配层只产 ProposedCommand |
+| P0-4 | `additionalProperties:false` 与"v1 内只加不改"直接冲突（老 reader 遇新字段即崩）| **采纳，修正 v0 版本纪律**：ir_version(结构) + opset_imports(方言语义) + required_capabilities(能力)；未知 capability fail-closed；未知非语义 metadata preserve 不解释；语义扩展=新 opset 版本 | Header 结构；schema 演化规则成文 |
+| P0-5 | AnchoredCycle 不许把"未知真相"伪装成"可配置真相"（无证据选 ISO_WEEK_MOD vs CONTINUOUS_WEEK）| 采纳（即 D2）：unresolved hypothesis set + horizon equivalence + 分歧 fail-closed | WorkCalendar.CycleSpec |
+| P1-1 | Contract 缺 weekday_policy（FIXED(WED) vs FLEXIBLE）——否则换星期几违法性永远靠经验判断 | 采纳：类型化 weekday_policy；母项目 R2′ 业务澄清 = FIXED(但 σ 可整体重指派，作为 policy 的一个取值文档化) | Contract 字段；拍板点②的 IR 侧表达 |
+| P1-2 | effective_from/to 需最低限度双时态：valid_time(业务生效) vs recorded_time(系统知晓) | 采纳设计，实现延后（当前数据无此场景）：Contract 保留双字段对 | Contract 类型注释 + Non-Goal |
+| P1-3 | ExceptionRecord 不能是万能逃生口：typed effect（WAIVE_OBLIGATION / SHIFT_SERVICE_DATE / SUSPEND_CONTRACT / OVERRIDE_WEEKDAY / MANUAL_ASSIGNMENT / DATA_CORRECTION）+ target/interval/reason_code/authority/source/approved_by | 采纳：v1 即做 typed effect 枚举；authority/approved_by 先留空 | ExceptionSet 结构 |
+| P1-4 | GateReport 是派生证据非计划自带事实（checker 升级后同 Plan 产生新 Report）：应含 input_plan_hash / checker_version / gate_spec_version | 采纳：GateReport 独立于 VisitPlan，携带哈希与版本 | 验收器重构（母项目 Task 4 对齐） |
+| P1-5 | ServiceResource 模型缺席（不做"广州10条线路专用格式"）| 采纳：MasterData.ServiceResource[] + ServiceEligibility(store↔rep, valid_from/to) M2M；RoutePlan(resource_id, service_date, assignments) 为对象非主数据 | §二 MasterData |
+
+**结构裁定汇总**：v0.1 core = Header / MasterData / WorkCalendar / ContractBook / ObligationSet / PlanState / ExceptionSet / Provenance / History 九件；by_store、by_day、GateReport、SP 列、ALNS 状态、solver idx 全部为投影或方言产物，不进 core state。五段纪律：`parse ≠ validate ≠ lower ≠ solve ≠ certify`。
