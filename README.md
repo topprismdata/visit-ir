@@ -1,6 +1,6 @@
 # VisitIR — 周期拜访计划中间表示（An Intermediate Representation for Periodic Visit Plans）
 
-> **Status**: 立项日 2026-09-06 · 设计研究阶段（与 ChatGPT 协同研究）
+> **Status**: v0.1 语义核心已落地（`src/visit_ir/contract.py`，自母项目剥离；7 单元测试含 AST 零依赖守卫 + W53 边界文档化）· 九件核心（ObligationSet/History 等）按 [`docs/DESIGN_DECISIONS_v0.1.md`](docs/DESIGN_DECISIONS_v0.1.md) 迭代中
 > **Mission**: 为"周期性外勤拜访计划"定义一个**规范、版本化、可独立验证**的中间表示（IR），把合同语义、日历、指派、例外账从具体数据源（SRP/优化器/人工/LLM 代理）与具体消费方（求解器/验收/审计）中解耦。
 > **母项目**: `visit-scheduling-optimizer`（快消外勤两阶段运筹引擎）；本项目从其语义层剥离独立。
 
