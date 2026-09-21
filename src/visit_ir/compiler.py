@@ -29,6 +29,7 @@ from visit_semantic_api import (
     ContractType,
     CoreProtectionPolicy,
     PlanningHorizon,
+    SemanticObjectivePolicy,
     SourceMetadata,
     VisitContract,
     VisitSemanticSpec,
@@ -109,6 +110,15 @@ class SemanticCompiler:
                 )
             )
 
+        # R2′ 换挡自由: 每店在每个星期一下的合同槽位集 (相位语义由 L1 独占)
+        weekday_slots: list[tuple[str, int, frozenset]] = []
+        for c in sorted(contracts_raw):
+            kappa, phi = contracts_raw[c]
+            for w, wds in by_wd.items():
+                weekday_slots.append(
+                    (c, w, frozenset(contract_slot_dates(kappa, phi, wds)))
+                )
+
         # ---- G5 走廊 (所有权正落点) ----
         if profile.corridor_override is not None:
             corridor = profile.corridor_override
@@ -153,6 +163,10 @@ class SemanticCompiler:
             "protections": [p.customer_code for p in protections],
             "exceptions": [e.exception_id for e in profile.exceptions],
             "workdays": sorted(str(d) for d in workdays),
+            "weekday_slots": sorted(
+                [code, w, sorted(str(d) for d in slots)]
+                for code, w, slots in weekday_slots
+            ),
         }
         content_hash = hashlib.sha256(
             json.dumps(payload, sort_keys=True, ensure_ascii=False).encode("utf-8")
@@ -171,5 +185,7 @@ class SemanticCompiler:
             corridor=corridor,
             core_protections=protections,
             exceptions=tuple(profile.exceptions),
+            objective_policy=SemanticObjectivePolicy(),
+            weekday_slots=tuple(weekday_slots),
             metadata=metadata,
         )

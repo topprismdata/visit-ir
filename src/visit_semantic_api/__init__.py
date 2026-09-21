@@ -180,6 +180,10 @@ class VisitSemanticSpec:
 
     不变量: 合同-相位一致性由 L1 编译时保证 (check_contract 零例外闸);
     本类型只承载结果, 不承载推导过程.
+
+    weekday_slots: (customer_code, weekday, 槽位日期集) 三元组 — R2′ 允许
+    换星期几, 每店在每个星期一下的合同槽位集都由 L1 显式携带, L2/L3 不得
+    自行推导相位语义.
     """
 
     horizon: PlanningHorizon
@@ -188,6 +192,7 @@ class VisitSemanticSpec:
     core_protections: tuple[CoreProtectionPolicy, ...] = ()
     exceptions: tuple[ExceptionGrant, ...] = ()
     objective_policy: SemanticObjectivePolicy = field(default_factory=SemanticObjectivePolicy)
+    weekday_slots: tuple = ()  # tuple[(code, weekday, frozenset[date])]
     metadata: Optional[SourceMetadata] = None
 
     def contract_of(self, customer_code: str) -> VisitContract:
