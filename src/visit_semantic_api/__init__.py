@@ -26,6 +26,7 @@ __all__ = [
     "CoreProtectionPolicy",
     "ExceptionGrant",
     "SemanticObjectivePolicy",
+    "CompilerProfile",
     "VisitContract",
     "VisitSemanticSpec",
 ]
@@ -134,6 +135,23 @@ class SemanticObjectivePolicy:
     workload_balance: str = "prefer_even"  # "prefer_even" | "ignore"
     core_protection_mode: str = "hard_constraint"  # "hard_constraint" | "high_weight"
     preference_mode: str = "lexicographic"  # "lexicographic" | "pareto"
+
+
+@dataclass(frozen=True)
+class CompilerProfile:
+    """SemanticCompiler 的策略输入 (与业务事实分离 — 事实可复算, 策略是授权).
+
+    corridor_override=None → 从历史计划推导走廊 (source=historical_baseline,
+    approved=False — 数据推导不算管理批准); 给出即视为管理指令
+    (source=management_directive, approved 随传入值).
+    """
+
+    snapshot_id: str = ""
+    timezone: str = "Asia/Shanghai"
+    calendar_id: str = "cn_workdays"
+    protected_codes: tuple = ()  # tuple[str] mandatory_visit 核心客户
+    exceptions: tuple = ()  # tuple[ExceptionGrant]
+    corridor_override: Optional[WorkloadCorridorPolicy] = None
 
 
 @dataclass(frozen=True)
